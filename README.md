@@ -14,9 +14,18 @@ The goal of the project is educational and for me to get more familiar with the 
 1. sbt package
 2. run locally with
 
-``
-REPO_COVID_PATH=~/Development/repos/COVID-19 $SPARK_HOME/bin/spark-submit \
+```
+REPO_COVID_PATH=<LOCAL_DATA_REPO_PATH> $SPARK_HOME/bin/spark-submit \
 --class "ReportsGenerator" \
 --master local[2]  \
 target/scala-2.11/spark-covid_2.11-1.0.jar
-``  
+``` 
+
+where `REPO_COVID_PATH` is the folder where the data repository has been cloned above.
+
+Or use the script
+```bash
+export SPARK_HOME=<LOCAL_SPARK_PATH>
+export REPO_COVID_PATH=<LOCAL_DATA_REPO_PATH>
+bash scripts/generateReports.sh
+```

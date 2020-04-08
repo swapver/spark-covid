@@ -13,10 +13,9 @@ object ReportsGenerator {
       System.exit(1)
     }
 
-
     val spark = SparkSession.
       builder.appName("Simple Application").
-      master("local[2]").//FIXME
+      master("local[2]").
       getOrCreate()
     import spark.implicits._
 
@@ -86,6 +85,7 @@ object ReportsGenerator {
     val europeanCountriesWithPopulation = countriesPopulation.join(europeanCountries, "Country")
     val sumPopulation = europeanCountriesWithPopulation.groupBy().sum("Population").take(1)(0).getLong(0)
 
+    // tmp col to apply window over frame
     val winPartitionID = org.apache.spark.sql.expressions.Window.partitionBy("PartitionID").orderBy("Day")
     val europeDaily = dataWithDay.
       join(europeanCountriesWithPopulation, dataWithDay("Country_Region") === europeanCountriesWithPopulation("Country")).
