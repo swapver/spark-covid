@@ -8,11 +8,11 @@ The goal of the project is educational and for me to get more familiar with the 
 
 ## Configure
 1. `git clone` [Johns Hopkins COVID-19 (2019-nCoV) Data Repository](https://github.com/CSSEGISandData/COVID-19) repository
-2. install Apache Spark 2.4.5
+2. install Apache Spark 2.4.5 locally
 
 ## Run
 1. sbt package
-2. run locally with
+2. submit spark job locally:
 
 ```
 REPO_COVID_PATH=<LOCAL_DATA_REPO_PATH> $SPARK_HOME/bin/spark-submit \
