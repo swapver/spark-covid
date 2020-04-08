@@ -15,6 +15,7 @@ object ReportsGenerator {
 
     val spark = SparkSession.
       builder.appName("Simple Application").
+//      master("local[2]").  
       getOrCreate()
     import spark.implicits._
 
@@ -34,14 +35,16 @@ object ReportsGenerator {
     val data = spark.read.
       option("header", true).
       option("inferSchema", true).
-      // import reports with newest header only, ie beginning from 03-23-2020.csv
-      csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*", pathPrefix + "04-*").
+      option("mode","FAILFAST"). // immediately fail if headers change again
+      option("timestampFormat", "MM/dd/yy HH:mm"). // additional format in files
+      csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*", pathPrefix + "0[4-9]-*"). // import reports with newest headers only
       cache()
 
 
     val dataWithDay = data.
       select("Country_Region", "Confirmed", "Deaths", "Recovered", "Active", "Last_Update").
       withColumn("Day", to_date(col("Last_Update"))).cache()
+
 
     val winCountry = org.apache.spark.sql.expressions.Window.partitionBy("Country_Region").orderBy("Day")
     val preparedData = dataWithDay.
@@ -59,7 +62,6 @@ object ReportsGenerator {
       withColumn("Infected_%", round(col("sum(Confirmed)") / col("Population") * 100, 2)).
       drop("Country").
       cache()
-
 
     (europeanCountries.select("country").collect().toSeq.map(r => r.get(0)) :+ "US").
       foreach(country =>
