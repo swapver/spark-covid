@@ -15,7 +15,6 @@ object ReportsGenerator {
 
     val spark = SparkSession.
       builder.appName("Simple Application").
-      master("local[2]").
       getOrCreate()
     import spark.implicits._
 
@@ -35,8 +34,6 @@ object ReportsGenerator {
     val data = spark.read.
       option("header", true).
       option("inferSchema", true).
-//TODO:     option("dateFormat", "MM/dd/yy").
-//TODO:     option("timestampFormat", "MM/dd/yy HH:mm:SS").
       // import reports with newest header only, ie beginning from 03-23-2020.csv
       csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*", pathPrefix + "04-*").
       cache()
