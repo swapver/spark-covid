@@ -5,7 +5,6 @@ phases:
     runtime-versions:
       java: corretto8
     commands:
-      - echo "$(lsb_release -cs)"
       - echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
       - curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | apt-key add
       - apt-get update -y
@@ -16,7 +15,7 @@ phases:
   build:
     commands:
       - sbt package
-  pre_build:
+  post_build:
     commands:      
       - echo "Done"
       - ll -la target
