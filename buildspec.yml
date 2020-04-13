@@ -22,6 +22,7 @@ phases:
 
 artifacts:
   files:
+    - appspec.yml
     - src/main/resources/*.csv
-    - target/scala-2.11/spark-covid_2.11-1.0.jar
+    - target/scala-2.11/spark-covid_2.11-1.0.jar  
   discard-paths: yes
