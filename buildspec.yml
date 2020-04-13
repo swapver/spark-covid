@@ -14,7 +14,8 @@ phases:
     commands:
       - echo "Creating artifact"
   build:
-    - sbt package
+    commands:
+      - sbt package
   pre_build:
     commands:      
       - echo "Done"
