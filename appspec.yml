@@ -3,3 +3,5 @@ os: linux
 files:
   - source: ./spark-covid_2.11-1.0.jar
     destination: /tmp
+  - source: ./*.csv
+    destination: /tmp
