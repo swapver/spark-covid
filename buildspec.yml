@@ -16,6 +16,6 @@ phases:
     commands:
       - sbt package
   post_build:
-    commands:      
+    commands:            
+      - ls -la target
       - echo "Done"
-      - ll -la target
