@@ -2,15 +2,16 @@ version: 0.0
 os: linux
 files:
   - source: ./spark-covid_2.11-1.0.jar
-    destination: /tmp
+    destination: /ec2-user
   - source: ./countries_europe.csv
-    destination: /tmp
+    destination: /ec2-user
   - source: ./countries_population.csv
-    destination: /tmp
+    destination: /ec2-user
   - source: ./run_job.sh
-    destination: /home/ec2-user
+    destination: /ec2-user
     
 
 hooks:
     AfterInstall:
     - location: run_job.sh
+      runas: ec2-user

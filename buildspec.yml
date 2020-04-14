@@ -16,8 +16,7 @@ phases:
     commands:
       - sbt package
   post_build:
-    commands:            
-      - ls -la target
+    commands:
       - echo "Done"
 
 artifacts:
