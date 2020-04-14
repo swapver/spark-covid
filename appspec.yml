@@ -9,8 +9,8 @@ files:
     destination: /tmp
   - source: ./run_job.sh
     destination: /home/ec2-user
-
+    
 
 hooks:
     AfterInstall:
-    - location: bash /tmp/run_job.sh
+    - location: run_job.sh
