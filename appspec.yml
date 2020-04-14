@@ -8,6 +8,7 @@ files:
   - source: ./countries_population.csv
     destination: /tmp
 
+
 hooks:
     ApplicationStart:
-    - location: ./run_job.sh
+    - location: run_job.sh
