@@ -24,5 +24,6 @@ artifacts:
     - appspec.yml
     - codedeploy-scripts/run_job.sh
     - src/main/resources/*.csv
+    - scripts/create_index.py
     - target/scala-2.11/spark-covid_2.11-1.0.jar  
   discard-paths: yes
