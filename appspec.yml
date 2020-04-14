@@ -7,8 +7,10 @@ files:
     destination: /tmp
   - source: ./countries_population.csv
     destination: /tmp
+  - source: ./run_job.sh
+    destination: /home/ec2-user
 
 
 hooks:
-    ApplicationStart:
-    - location: run_job.sh
+    AfterInstall:
+    - location: bash /tmp/run_job.sh
