@@ -2,13 +2,13 @@ version: 0.0
 os: linux
 files:
   - source: ./spark-covid_2.11-1.0.jar
-    destination: /ec2-user
+    destination: /home/ec2-user
   - source: ./countries_europe.csv
-    destination: /ec2-user
+    destination: /home/ec2-user
   - source: ./countries_population.csv
-    destination: /ec2-user
+    destination: /home/ec2-user
   - source: ./run_job.sh
-    destination: /ec2-user
+    destination: /home/ec2-user
     
 
 hooks:
