@@ -29,3 +29,9 @@ export SPARK_HOME=<LOCAL_SPARK_PATH>
 export REPO_COVID_PATH=<LOCAL_DATA_REPO_PATH>
 bash scripts/generateReports.sh
 ```
+
+## AWS CI/CD
+
+```bash
+aws cloudformation deploy --template-file cloudformation/cf-all.yml --stack-name spark-covid  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+```

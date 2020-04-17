@@ -1,0 +1,360 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Spark Covid
+
+#TODO
+# Cloudwatch Event Scheduler Rule
+
+Parameters:
+  EC2NameTag:
+    Type: String
+    Default: spark-covid
+  EC2Key:
+    Type: String
+    Default: andrikod-aws
+
+Resources:
+  ##################################################
+  ## CodeBuild
+  CodeBuildRole:  
+    Type: AWS::IAM::Role
+    Properties:      
+      RoleName: spark-covid-code-build-role
+      Path: /service-role/
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - codebuild.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ## TODO: replace admin policy with more fine grained policies
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+        # - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        # - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        # - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+  
+  CodeBuildBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: spark-covid-code-build-artifact-bucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  SparkCovidCodeBuild:
+    Type: AWS::CodeBuild::Project    
+    DependsOn: CodeBuildRole
+    Properties:
+        Name: spark-covid-code-builder
+        Description: Covid Spark Artifactory Builder
+        Artifacts: 
+          EncryptionDisabled: true
+          Location: !Ref CodeBuildBucket
+          Name: spark-covid.zip
+          NamespaceType: NONE
+          OverrideArtifactName: false
+          Packaging: ZIP
+          Path: ''
+          Type: S3
+        BadgeEnabled: false
+        Cache: 
+          Type: NO_CACHE    
+        ## TODO: enable encryption for S3 buckets too    
+        # EncryptionKey: arn:aws:kms:*****/aws/s3  
+        Environment: 
+          Type: LINUX_CONTAINER
+          ComputeType: BUILD_GENERAL1_SMALL
+          EnvironmentVariables: []
+          Image: aws/codebuild/standard:4.0
+          ImagePullCredentialsType: CODEBUILD
+          PrivilegedMode: false        
+        LogsConfig: 
+          CloudWatchLogs:
+            GroupName: spark-covid-code-build
+            Status: ENABLED
+          S3Logs:
+            EncryptionDisabled: true
+            Status: DISABLED                
+        QueuedTimeoutInMinutes: 480                
+        ServiceRole: !GetAtt CodeBuildRole.Arn        
+        Source: 
+          GitCloneDepth: 1
+          GitSubmodulesConfig:
+            FetchSubmodules: false
+          InsecureSsl: false
+          Location: https://github.com/andrikod/spark-covid.git
+          ReportBuildStatus: false
+          Type: GITHUB
+        SourceVersion: aws-deploy ## TODO: switch to master after merging        
+        TimeoutInMinutes: 60
+        Triggers: 
+          Webhook: true
+          FilterGroups:            
+            - - Type: EVENT
+                Pattern: PUSH
+                ExcludeMatchedPattern: false
+
+  ##################################################
+  ## CodeDeploy
+  CodeDeployRole:  
+    Type: AWS::IAM::Role
+    Properties:      
+      RoleName: spark-covid-code-deploy-role
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - codedeploy.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ## TODO: replace admin policy with more fine grained policies
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties: 
+      ApplicationName: spark-covid-code-deploy
+      ComputePlatform: Server
+  
+  CodeDeployApplicationGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName: !Ref CodeDeployApplication
+      DeploymentGroupName: spark-covid-code-deploy-group
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      ServiceRoleArn: !GetAtt CodeDeployRole.Arn
+      DeploymentStyle:
+        DeploymentOption: WITHOUT_TRAFFIC_CONTROL
+        DeploymentType: IN_PLACE
+      Ec2TagSet:
+        Ec2TagSetList:
+        - Ec2TagGroup:
+          - Key: Name            
+            Value: !Ref EC2NameTag
+            Type: KEY_AND_VALUE
+
+  CodeBuildBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: andrikod-spark-covid  ## SEE: run_job.sh
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:     
+      GroupName: ssh
+      GroupDescription: shh access for ec2      
+      SecurityGroupIngress:         
+        - FromPort: 22
+          IpProtocol: tcp          
+          CidrIp: 0.0.0.0/0
+          ToPort: 22
+  
+  EC2DeployRole:  
+    Type: AWS::IAM::Role
+    Properties:      
+      RoleName: spark-covid-ec2-deploy-role
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+              - s3.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ## TODO: replace admin policy with more fine grained policies
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: spark-covid-ec2-instance-profile
+      Path: /
+      Roles: 
+        - !Ref EC2DeployRole
+
+  EC2Worker:
+    Type: AWS::EC2::Instance
+    DependsOn: EC2DeployRole
+    Properties: 
+      ImageId: ami-0f7919c33c90f5b58
+      InstanceType: t2.micro
+      KeyName: !Ref EC2Key
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !Ref SSHSecurityGroup 
+      Tags:
+      - Key: Name
+        Value: !Ref EC2NameTag
+      UserData: 
+        Fn::Base64:
+          !Sub |
+          #!/bin/bash
+          sudo yum -y update
+          sudo yum install -y ruby
+          sudo yum install -y git
+          sudo yum install -y java-1.8.0-openjdk
+
+          ## code deploy agent
+          cd /home/ec2-user
+          curl -O https://aws-codedeploy-us-east-2.s3.amazonaws.com/latest/install
+          chmod +x ./install
+          sudo ./install auto
+
+          ## apache spark
+          wget https://artfiles.org/apache.org/spark/spark-2.4.5/spark-2.4.5-bin-hadoop2.7.tgz
+          tar -xzf spark-2.4.5-bin-hadoop2.7.tgz
+
+          ## Johns Hopkins COVID-19 (2019-nCoV) Data Repository
+          git clone https://github.com/CSSEGISandData/COVID-19.git 
+
+
+  ##################################################
+  ## CodePipeline
+  CodePipelineRole:  
+    Type: AWS::IAM::Role
+    Properties:      
+      RoleName: spark-covid-code-pipeline-role
+      Path: /service-role/      
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - codepipeline.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ## TODO: replace admin policy with more fine grained policies
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  
+  CodePipelineBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: spark-covid-code-pipeline-artifact-bucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  SparkCovidCodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: spark-covid-cf
+      RestartExecutionOnUpdate: false
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref CodePipelineBucket
+      Stages: 
+      - 
+        Name: Source 
+        Actions: 
+          - 
+            Name: SourceAction
+            ActionTypeId: 
+              Category: Source 
+              Owner: ThirdParty 
+              Version: 1 
+              Provider: GitHub
+            OutputArtifacts: 
+              - 
+                Name: SourceArtifact
+            Configuration: 
+              Owner: andrikod
+              Branch: aws-deploy
+              # OAuthToken: '{{resolve:ssm-secure:githubOAuthToken:1}}'      :( not supported in AWS::CodePipeline::Pipeline
+              # OAuthToken:  {resolve:secretsmanager:secret-id:secret-string:json-key:version-stage:version-id}}  :( not free
+              OAuthToken: '{{resolve:ssm:githubOAuthToken:1}}'
+              PollForSourceChanges: false
+              Repo: spark-covid
+            RunOrder: 1 
+      - 
+        Name: Build 
+        Actions: 
+          - 
+            Name: Build
+            ActionTypeId: 
+              Category: Build
+              Owner: AWS
+              Version: 1 
+              Provider: CodeBuild
+            InputArtifacts:
+              -
+                Name: SourceArtifact
+            OutputArtifacts: 
+              - 
+                Name: BuildArtifact
+            Configuration: 
+              ProjectName: !Ref SparkCovidCodeBuild
+            RunOrder: 1
+      - 
+        Name: Deploy 
+        Actions: 
+          - 
+            Name: Deploy
+            ActionTypeId: 
+              Category: Deploy
+              Owner: AWS
+              Version: 1 
+              Provider: CodeDeploy            
+            Configuration: 
+              ApplicationName: !Ref CodeDeployApplication
+              DeploymentGroupName: !Ref CodeDeployApplicationGroup
+            InputArtifacts:
+              -
+                Name: BuildArtifact
+            RunOrder: 1
+
+
+  ##################################################
+  ## Scheduler
+  # EventRuleSchedulerRole:  
+  #   Type: AWS::IAM::Role
+  #   Properties:      
+  #     RoleName: spark-covid-event-rule-role
+  #     Path: /service-role/      
+  #     AssumeRolePolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service:
+  #             - events.amazonaws.com
+  #           Action:
+  #             - 'sts:AssumeRole'
+  #     ## TODO: replace admin policy with more fine grained policies
+  #     ManagedPolicyArns:
+  #       - arn:aws:iam::aws:policy/AdministratorAccess
+
+  # EventRuleScheduler:
+  #   Type: AWS::Events::Rule
+  #   Properties: 
+  #     Name: spark-covid-event-rule
+  #     Description: Triggers pipeline execution
+  #     State: DISABLED ##TODO set to ENABLED
+  #     ScheduleExpression: "cron(0 9 * * ? *)"        
+  #     Targets: 
+  #       - Arn: ##FIXME !GetAtt SparkCovidCodePipeline.PipelineArn
+  #         Id: spark-covid-code-pipeline-target          
+  #         RoleArn: !GetAtt EventRuleSchedulerRole.Arn
+          
