@@ -1,9 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Spark Covid
 
-#TODO
-# Cloudwatch Event Scheduler Rule
-
 Parameters:
   EC2NameTag:
     Type: String
@@ -90,7 +87,7 @@ Resources:
           Location: https://github.com/andrikod/spark-covid.git
           ReportBuildStatus: false
           Type: GITHUB
-        SourceVersion: aws-deploy ## TODO: switch to master after merging        
+        SourceVersion: master
         TimeoutInMinutes: 60
         Triggers: 
           Webhook: true
@@ -282,6 +279,7 @@ Resources:
             Configuration: 
               Owner: andrikod
               Branch: aws-deploy
+              # TODO
               # OAuthToken: '{{resolve:ssm-secure:githubOAuthToken:1}}'      :( not supported in AWS::CodePipeline::Pipeline
               # OAuthToken:  {resolve:secretsmanager:secret-id:secret-string:json-key:version-stage:version-id}}  :( not free
               OAuthToken: '{{resolve:ssm:githubOAuthToken:1}}'
@@ -325,7 +323,8 @@ Resources:
                 Name: BuildArtifact
             RunOrder: 1
 
-
+  #TODO
+  # Cloudwatch Event Scheduler Rule
   ##################################################
   ## Scheduler
   # EventRuleSchedulerRole:  
