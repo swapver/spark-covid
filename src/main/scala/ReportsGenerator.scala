@@ -15,21 +15,21 @@ object ReportsGenerator {
 
     val spark = SparkSession.
       builder.appName("Simple Application").
-//      master("local[2]").  
       getOrCreate()
     import spark.implicits._
 
+    val resourcesPathPrefix  = sys.env.get("RESOURCES_PATH").getOrElse("src/main/resources/")
     val europeanCountries = spark.
       read.
       option("header", true).
       option("inferSchema", true).
-      csv("src/main/resources/countries_europe.csv")
+      csv(resourcesPathPrefix + "countries_europe.csv")
 
     val countriesPopulation = spark.
       read.
       option("header", true).
       option("inferSchema", true).
-      csv("src/main/resources/countries_population.csv")
+      csv(resourcesPathPrefix + "countries_population.csv")
 
     val pathPrefix =  "file:///"+ covidDataPath.get + "/csse_covid_19_data/csse_covid_19_daily_reports/"
     val data = spark.read.

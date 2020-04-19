@@ -26,7 +26,6 @@ doc += """
 </html>
 """
 
-print(doc)
 file = open("out/index.html","w") 
 file.write(doc)
 file.close()
