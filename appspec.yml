@@ -1,8 +1,6 @@
 version: 0.0
 os: linux
 files:
-  - source: /home/ec2-user/spark-covid/target/scala-2.11/spark-covid_2.11-1.0.jar
-    destination: /home/ec2-user
   - source: ./countries_europe.csv
     destination: /home/ec2-user
   - source: ./countries_population.csv
