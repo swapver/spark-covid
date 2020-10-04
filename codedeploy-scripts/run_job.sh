@@ -9,4 +9,4 @@ RESOURCES_PATH=$RESOURCES_PATH REPO_COVID_PATH=$REPO_COVID_PATH /home/ec2-user/.
 python /home/ec2-user/spark-covid/scripts/create_index.py
 
 ## BUCKET=$(aws --region eu-central-1 ssm get-parameter --name spark-covid-bucket --query 'Parameter.Value' --output text)
-aws s3 sync out s3://andrikod-spark-covid
+aws s3 sync out s3://swapnil-verma
