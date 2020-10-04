@@ -3,14 +3,6 @@ os: linux
 files:
   - source: /
     destination: /home/ec2-user
-  - source: /home/ec2-user/spark-covid/src/main/resources/countries_europe.csv
-    destination: /home/ec2-user
-  - source: /home/ec2-user/spark-covid/src/main/resources/countries_population.csv
-    destination: /home/ec2-user
-  - source: /home/ec2-user/spark-covid/codedeploy-scripts/run_job.sh
-    destination: /home/ec2-user
-  - source: /home/ec2-user/spark-covid/scripts/create_index.py
-    destination: /home/ec2-user
   
 hooks:
     AfterInstall:
