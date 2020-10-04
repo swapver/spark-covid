@@ -11,8 +11,8 @@ chmod +x ./install
 sudo ./install auto
 
 ## apache spark
-wget https://artfiles.org/apache.org/spark/spark-2.4.5/spark-2.4.5-bin-hadoop2.7.tgz
-tar -xzf spark-2.4.5-bin-hadoop2.7.tgz
+wget https://artfiles.org/apache.org/spark/spark-2.4.7/spark-2.4.7-bin-hadoop2.7.tgz
+tar -xzf spark-2.4.7-bin-hadoop2.7.tgz
 
 ## Johns Hopkins COVID-19 (2019-nCoV) Data Repository
 git clone https://github.com/CSSEGISandData/COVID-19.git 
