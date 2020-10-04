@@ -3,12 +3,7 @@ os: linux
 files:
   - source: /
     destination: /home/ec2-user
-  - source: ./run_job.sh
-    destination: /home/ec2-user
-  - source: ./create_index.py
-    destination: /home/ec2-user
-    
-
+  
 hooks:
     AfterInstall:
     - location: run_job.sh
