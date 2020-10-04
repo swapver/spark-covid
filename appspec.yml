@@ -1,9 +1,7 @@
 version: 0.0
 os: linux
 files:
-  - source: ./countries_europe.csv
-    destination: /home/ec2-user
-  - source: ./countries_population.csv
+  - source: /
     destination: /home/ec2-user
   - source: ./run_job.sh
     destination: /home/ec2-user
