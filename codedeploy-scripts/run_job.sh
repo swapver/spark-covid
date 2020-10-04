@@ -1,5 +1,6 @@
 cd /home/ec2-user/
 mkdir -p out
+rm out/*
 
 REPO_COVID_PATH=/home/ec2-user/COVID-19
 RESOURCES_PATH=/home/ec2-user/
