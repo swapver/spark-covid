@@ -6,5 +6,5 @@ files:
   
 hooks:
     AfterInstall:
-    - location: run_job.sh
+    - location: codedeploy-scripts/run_job.sh
       runas: ec2-user
