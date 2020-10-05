@@ -39,15 +39,15 @@ object ReportsGenerator {
       option("timestampFormat", "MM/dd/yy HH:mm"). // additional format in files
       csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*", pathPrefix + "0[4-9]-*"). // import reports with newest headers only
       cache()
+    val data = data.columns.foldLeft(data)((current,c)=> current.withColumn(c,col(c).cast("float")))
 
 
     val dataWithDay = data.
       select("Country_Region", "Confirmed", "Deaths", "Recovered", "Active", "Last_Update").
       withColumn("Day", to_date(col("Last_Update"))).cache()
-
+    val dataWithDay = dataWithDay.columns.foldLeft(datawithDay)((current,c)=> current.withColumn(c,col(c).cast("float")))
 
     val winCountry = org.apache.spark.sql.expressions.Window.partitionBy("Country_Region").orderBy("Day")
-    import spark.implicits._
     val preparedData = dataWithDay.
       groupBy("Country_Region", "Day").sum("Confirmed", "Recovered").
       withColumn("Daily_Confirmed_Rate", col("sum(Confirmed)") - lag("sum(Confirmed)", 1).over(winCountry)).
@@ -85,7 +85,6 @@ object ReportsGenerator {
 
     // tmp col to apply window over frame
     val winPartitionID = org.apache.spark.sql.expressions.Window.partitionBy("PartitionID").orderBy("Day")
-    import spark.implicits._
     val europeDaily = dataWithDay.
       join(europeanCountriesWithPopulation, dataWithDay("Country_Region") === europeanCountriesWithPopulation("Country")).
       groupBy("Day").sum("Confirmed", "Recovered").
