@@ -42,10 +42,9 @@ object ReportsGenerator {
     val data = data1.columns.foldLeft(data1)((current,c)=> current.withColumn(c,col(c).cast("float")))
 
 
-    val dataWithDay1 = data.
+    val dataWithDay = data.
       select("Country_Region", "Confirmed", "Deaths", "Recovered", "Active", "Last_Update").
       withColumn("Day", to_date(col("Last_Update"))).cache()
-    val dataWithDay = dataWithDay1.columns.foldLeft(datawithDay1)((current,c)=> current.withColumn(c,col(c).cast("float")))
 
     val winCountry = org.apache.spark.sql.expressions.Window.partitionBy("Country_Region").orderBy("Day")
     val preparedData = dataWithDay.
