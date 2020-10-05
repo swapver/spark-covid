@@ -11,4 +11,4 @@ REPO_COVID_PATH=$REPO_COVID_PATH
 python /home/ec2-user/spark-covid/scripts/create_index.py
 
 ## BUCKET=$(aws --region eu-central-1 ssm get-parameter --name spark-covid-bucket --query 'Parameter.Value' --output text)
-aws s3 sync out s3://swapnil-verma
+aws s3 sync out s3://codepipeline-us-east-2-65887929830
