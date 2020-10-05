@@ -37,25 +37,24 @@ object ReportsGenerator {
       option("inferSchema", true).
       option("mode","FAILFAST"). // immediately fail if headers change again
       option("timestampFormat", "MM/dd/yy HH:mm"). // additional format in files
-      csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*", pathPrefix + "0[4-9]-*"). // import reports with newest headers only
+      csv(pathPrefix + "02-03-2020"). // import reports with newest headers only
       cache()
     
     val data = data1.select(
-    data1.col("Country_Region").cast("string"),
+    data1.col("Country/Region").cast("string"),
     data1.col("Confirmed").cast("integer"),
     data1.col("Deaths").cast("integer"),
     data1.col("Recovered").cast("integer"),
-    data1.col("Active").cast("integer"),
     data1.col("Last_Update").cast("timestamp")
     )
 
     val dataWithDay = data.
-      select("Country_Region", "Confirmed", "Deaths", "Recovered", "Active", "Last_Update").
+      select("Country/Region", "Confirmed", "Deaths", "Recovered", "Last_Update").
       withColumn("Day", to_date(col("Last_Update"))).cache()
 
-    val winCountry = org.apache.spark.sql.expressions.Window.partitionBy("Country_Region").orderBy("Day")
+    val winCountry = org.apache.spark.sql.expressions.Window.partitionBy("Country/Region").orderBy("Day")
     val preparedData = dataWithDay.
-      groupBy("Country_Region", "Day").sum("Confirmed", "Recovered").
+      groupBy("Country/Region", "Day").sum("Confirmed", "Recovered").
       withColumn("Daily_Confirmed_Rate", col("sum(Confirmed)") - lag("sum(Confirmed)", 1).over(winCountry)).
       withColumn("Daily_Confirmed_%", round((col("Daily_Confirmed_Rate") - lag("Daily_Confirmed_Rate", 1).over(winCountry)) / lag("Daily_Confirmed_Rate", 1).over(winCountry) * 100, 2)).
       withColumn("Daily_Recovered_Rate", col("sum(Recovered)") - lag("sum(Recovered)", 1).over(winCountry)).cache().
@@ -63,7 +62,7 @@ object ReportsGenerator {
 
 
     // append population
-    val dataWithPopulation = preparedData.join(countriesPopulation, preparedData("Country_Region") === countriesPopulation("Country")).
+    val dataWithPopulation = preparedData.join(countriesPopulation, preparedData("Country/Region") === countriesPopulation("Country")).
       withColumn("Infected_%", round(col("sum(Confirmed)") / col("Population") * 100, 2)).
       drop("Country").
       cache()
@@ -72,7 +71,7 @@ object ReportsGenerator {
       foreach(country =>
         reflect.io.File("out/" + country + ".html").writeAll(
           toHTMLString(dataWithPopulation.
-            filter("Country_Region = '" + country + "'").
+            filter("Country/Region = '" + country + "'").
             sort($"Day".desc))
         )
       )
@@ -92,7 +91,7 @@ object ReportsGenerator {
     // tmp col to apply window over frame
     val winPartitionID = org.apache.spark.sql.expressions.Window.partitionBy("PartitionID").orderBy("Day")
     val europeDaily = dataWithDay.
-      join(europeanCountriesWithPopulation, dataWithDay("Country_Region") === europeanCountriesWithPopulation("Country")).
+      join(europeanCountriesWithPopulation, dataWithDay("Country/Region") === europeanCountriesWithPopulation("Country")).
       groupBy("Day").sum("Confirmed", "Recovered").
       withColumn("PartitionID", lit("PartitionID")).
       withColumn("Daily_Confirmed_Rate", col("sum(Confirmed)") - lag("sum(Confirmed)", 1).over(winPartitionID)).
