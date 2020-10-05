@@ -32,20 +32,20 @@ object ReportsGenerator {
       csv(resourcesPathPrefix + "countries_population.csv")
 
     val pathPrefix =  "file:///"+ covidDataPath.get + "/csse_covid_19_data/csse_covid_19_daily_reports/"
-    val data = spark.read.
+    val data1 = spark.read.
       option("header", true).
       option("inferSchema", true).
       option("mode","FAILFAST"). // immediately fail if headers change again
       option("timestampFormat", "MM/dd/yy HH:mm"). // additional format in files
       csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*", pathPrefix + "0[4-9]-*"). // import reports with newest headers only
       cache()
-    val data = data.columns.foldLeft(data)((current,c)=> current.withColumn(c,col(c).cast("float")))
+    val data = data1.columns.foldLeft(data1)((current,c)=> current.withColumn(c,col(c).cast("float")))
 
 
-    val dataWithDay = data.
+    val dataWithDay1 = data.
       select("Country_Region", "Confirmed", "Deaths", "Recovered", "Active", "Last_Update").
       withColumn("Day", to_date(col("Last_Update"))).cache()
-    val dataWithDay = dataWithDay.columns.foldLeft(datawithDay)((current,c)=> current.withColumn(c,col(c).cast("float")))
+    val dataWithDay = dataWithDay1.columns.foldLeft(datawithDay1)((current,c)=> current.withColumn(c,col(c).cast("float")))
 
     val winCountry = org.apache.spark.sql.expressions.Window.partitionBy("Country_Region").orderBy("Day")
     val preparedData = dataWithDay.
