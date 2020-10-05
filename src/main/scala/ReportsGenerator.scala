@@ -2,7 +2,6 @@ import java.time.format.DateTimeFormatter
 
 import org.apache.spark.sql.{Dataset, SparkSession}
 import org.apache.spark.sql.functions._
-import spark.implicits._
 
 
 object ReportsGenerator {
