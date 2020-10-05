@@ -37,7 +37,7 @@ object ReportsGenerator {
       option("inferSchema", true).
       option("mode","FAILFAST"). // immediately fail if headers change again
       option("timestampFormat", "MM/dd/yy HH:mm"). // additional format in files
-      csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*", pathPrefix + "0[4-9]-*"). // import reports with newest headers only
+      csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*"). // import reports with newest headers only
       cache()
     
     val exclude = Array("Country_Region","Last_Update")
