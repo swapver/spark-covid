@@ -49,11 +49,9 @@ object ReportsGenerator {
 
     val winCountry = org.apache.spark.sql.expressions.Window.partitionBy("Country_Region").orderBy("Day")
     val preparedData = dataWithDay.
-      groupBy("Country_Region", "Day").agg(sum("Deaths", "Confirmed", "Recovered")).
+      groupBy("Country_Region", "Day").sum("Confirmed", "Recovered").
       withColumn("Daily_Confirmed_Rate", col("sum(Confirmed)") - lag("sum(Confirmed)", 1).over(winCountry)).
       withColumn("Daily_Confirmed_%", round((col("Daily_Confirmed_Rate") - lag("Daily_Confirmed_Rate", 1).over(winCountry)) / lag("Daily_Confirmed_Rate", 1).over(winCountry) * 100, 2)).
-      withColumn("Daily_Deaths_Rate", col("sum(Deaths)") - lag("sum(Deaths)", 1).over(winCountry)).
-      withColumn("Daily_Deaths_%", round((col("Daily_Deaths_Rate") - lag("Daily_Deaths_Rate", 1).over(winCountry)) / lag("Daily_Deaths_Rate", 1).over(winCountry) * 100, 2)).
       withColumn("Daily_Recovered_Rate", col("sum(Recovered)") - lag("sum(Recovered)", 1).over(winCountry)).cache().
       withColumn("Daily_Recovered_%", round((col("Daily_Recovered_Rate") - lag("Daily_Recovered_Rate", 1).over(winCountry)) / lag("Daily_Recovered_Rate", 1).over(winCountry) * 100, 2))
 
@@ -83,18 +81,16 @@ object ReportsGenerator {
     )
 
     val europeanCountriesWithPopulation = countriesPopulation.join(europeanCountries, "Country")
-    val sumPopulation = europeanCountriesWithPopulation.groupBy().agg(sum("Population")).take(1)(0).getLong(0)
+    val sumPopulation = europeanCountriesWithPopulation.groupBy().sum("Population").take(1)(0).getLong(0)
 
     // tmp col to apply window over frame
     val winPartitionID = org.apache.spark.sql.expressions.Window.partitionBy("PartitionID").orderBy("Day")
     val europeDaily = dataWithDay.
       join(europeanCountriesWithPopulation, dataWithDay("Country_Region") === europeanCountriesWithPopulation("Country")).
-      groupBy("Day").agg(sum("Deaths", "Confirmed", "Recovered")).
+      groupBy("Day").sum("Confirmed", "Recovered").
       withColumn("PartitionID", lit("PartitionID")).
       withColumn("Daily_Confirmed_Rate", col("sum(Confirmed)") - lag("sum(Confirmed)", 1).over(winPartitionID)).
       withColumn("Daily_Confirmed_%", round((col("Daily_Confirmed_Rate") - lag("Daily_Confirmed_Rate", 1).over(winPartitionID)) / lag("Daily_Confirmed_Rate", 1).over(winPartitionID) * 100, 2)).
-      withColumn("Daily_Deaths_Rate", col("sum(Deaths)") - lag("sum(Deaths)", 1).over(winPartitionID)).
-      withColumn("Daily_Deaths_%", round((col("Daily_Deaths_Rate") - lag("Daily_Deaths_Rate", 1).over(winPartitionID)) / lag("Daily_Deaths_Rate", 1).over(winPartitionID) * 100, 2)).
       withColumn("Daily_Recovered_Rate", col("sum(Recovered)") - lag("sum(Recovered)", 1).over(winPartitionID)).cache().
       withColumn("Daily_Recovered_%", round((col("Daily_Recovered_Rate") - lag("Daily_Recovered_Rate", 1).over(winPartitionID)) / lag("Daily_Recovered_Rate", 1).over(winPartitionID) * 100, 2)).
       withColumn("sumPopulation", lit(sumPopulation)).
