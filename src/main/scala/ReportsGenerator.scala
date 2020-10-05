@@ -50,8 +50,6 @@ object ReportsGenerator {
     val europeDaily = dataWithDay.join(europeanCountriesWithPopulation, dataWithDay("Country_Region") === europeanCountriesWithPopulation("Country")).groupBy("Day").sum("Deaths", "Confirmed", "Recovered").withColumn("PartitionID", lit("PartitionID")).withColumn("Daily_Confirmed_Rate", col("sum(Confirmed)") - lag("sum(Confirmed)", 1).over(winPartitionID)).withColumn("Daily_Confirmed_%", round((col("Daily_Confirmed_Rate") - lag("Daily_Confirmed_Rate", 1).over(winPartitionID)) / lag("Daily_Confirmed_Rate", 1).over(winPartitionID) * 100, 2)).withColumn("Daily_Deaths_Rate", col("sum(Deaths)") - lag("sum(Deaths)", 1).over(winPartitionID)).withColumn("Daily_Deaths_%", round((col("Daily_Deaths_Rate") - lag("Daily_Deaths_Rate", 1).over(winPartitionID)) / lag("Daily_Deaths_Rate", 1).over(winPartitionID) * 100, 2)).withColumn("Daily_Recovered_Rate", col("sum(Recovered)") - lag("sum(Recovered)", 1).over(winPartitionID)).cache().withColumn("Daily_Recovered_%", round((col("Daily_Recovered_Rate") - lag("Daily_Recovered_Rate", 1).over(winPartitionID)) / lag("Daily_Recovered_Rate", 1).over(winPartitionID) * 100, 2)).withColumn("sumPopulation", lit(sumPopulation)).withColumn("Infected_%", round(col("sum(Confirmed)") / col("sumPopulation") * 100, 2)).drop("PartitionID")
 
     reflect.io.File("out/Europe_Daily.html").writeAll(toHTMLString(europeDaily.sort($"Day".desc)))
-
-    spark.stop()
   }
 
   def toHTMLString(dt: Dataset[_]): String = {
