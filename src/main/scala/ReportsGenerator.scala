@@ -39,9 +39,15 @@ object ReportsGenerator {
       option("timestampFormat", "MM/dd/yy HH:mm"). // additional format in files
       csv(pathPrefix + "03-2[3-9]*", pathPrefix + "03-3[0-9]*", pathPrefix + "0[4-9]-*"). // import reports with newest headers only
       cache()
-    val exclude = array("Country_Region","Last_Update")
-    val data = (data1.columns.toBuffer --= exclude).foldLeft(data1)((current,c)=> current.withColumn(c,col(c).cast("float")))
-
+    
+    val data = data1.select(
+    data1.col("Country_Region").cast("string"),
+    data1.col("Confirmed").cast("integer"),
+    data1.col("Deaths").cast("integer"),
+    data1.col("Recovered").cast("integer"),
+    data1.col("Active").cast("integer"),
+    data1.col("Last_Update").cast("timestamp")
+    )
 
     val dataWithDay = data.
       select("Country_Region", "Confirmed", "Deaths", "Recovered", "Active", "Last_Update").
